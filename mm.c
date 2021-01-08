@@ -114,7 +114,6 @@ static inline word_t *next_list_block_ptr_diff_from_bt(word_t *bt) {
   return bt + 2;
 }
 
-/* Get previous free list element. */
 static inline word_t *get_prev_list_block(word_t *bt) {
   word_t *prev_block_diff = prev_list_block_ptr_diff_from_bt(bt);
   if (*prev_block_diff == 0)
