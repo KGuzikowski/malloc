@@ -106,8 +106,8 @@ static inline word_t *bt_prev(word_t *bt) {
   return (void *)bt - bt_size(prev_footer);
 }
 
-/* get ptr where the value of difference ofpointers to the prev list elem is
- * stored.*/
+/* Get ptr where the value of the difference of pointers to the prev list elem
+ * is stored.*/
 static inline word_t *prev_list_block_ptr_diff_from_bt(word_t *bt) {
   return bt + 1;
 }
@@ -116,6 +116,7 @@ static inline word_t *next_list_block_ptr_diff_from_bt(word_t *bt) {
   return bt + 2;
 }
 
+/* Get previous free list element. */
 static inline word_t *get_prev_list_block(word_t *bt) {
   word_t *prev_block_diff = prev_list_block_ptr_diff_from_bt(bt);
   if (*prev_block_diff == 0)
@@ -131,7 +132,8 @@ static inline word_t *get_next_list_block(word_t *bt) {
 }
 
 static inline void add_to_free_list(word_t *bt) {
-  /* value of zero says that list ends/starts here */
+  /* Value 0 says that list ends/starts here. Nodes of the list keep a
+   * difference of pointers neighbouring list elems. */
   if (!list_start) {
     list_start = bt;
     list_end = bt;
@@ -167,7 +169,7 @@ static inline void remove_from_free_list(word_t *bt) {
   }
 }
 
-/* Sets up a block. */
+/* Sets up a block (sets up flags and corrects flags of next block). */
 static inline void bt_make(word_t *bt, size_t size, short flags,
                            bool correct_next_block_flags) {
   *bt = size | flags;
@@ -257,6 +259,7 @@ void *malloc(size_t size) {
     }
   }
   if (last && bt_free(last)) {
+    /* No need to extend heap by reqsz */
     size_t extra_memory_needed = reqsz - bt_size(last);
     ptr = morecore(extra_memory_needed);
     if (!ptr)
@@ -330,6 +333,7 @@ void *realloc(void *old_ptr, size_t size) {
     size_t old_next_block_size = next ? bt_size(next) : -1;
     bt_split(bt, old_block_size, reqsz);
     if (next && bt_free(next) && old_next_block_size != -1) {
+      /* Merge two free blocks. */
       word_t *new_bt_next_block = bt_next(bt);
       remove_from_free_list(new_bt_next_block);
       remove_from_free_list(next);
